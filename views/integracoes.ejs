@@ -1,0 +1,191 @@
+<div class="toolbar">
+  <button class="btn btn-p" type="button" onclick="document.getElementById('nova-integracao-overlay').classList.add('open')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nova integração
+  </button>
+</div>
+
+<div class="modal-overlay" id="nova-integracao-overlay">
+  <div class="modal-card" style="max-width:380px">
+    <div class="modal-icon info"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20"/></svg></div>
+    <div class="modal-title">Nova integração de API</div>
+    <div class="modal-text">A API externa deve responder com uma lista (array) de itens na raiz. Cada integração sincroniza um único tipo (Insumo ou Embalagem) - crie duas integrações se precisar dos dois.</div>
+    <form method="post" action="/api-integracoes" class="modal-form">
+      <div class="ep-field"><label>Nome da integração</label><input type="text" name="nome" placeholder="Ex: Fornecedor XPTO" required /></div>
+      <div class="ep-field"><label>URL</label><input type="text" name="url" placeholder="https://api.fornecedor.com/produtos" required /></div>
+      <div class="ep-field-row">
+        <div class="ep-field"><label>Método</label>
+          <select name="metodo"><option value="GET">GET</option><option value="POST">POST</option></select>
+        </div>
+        <div class="ep-field"><label>Tipo sincronizado</label>
+          <select name="tipo_padrao"><option value="INSUMO">Insumo</option><option value="EMBALAGEM">Embalagem</option></select>
+        </div>
+      </div>
+      <div class="ep-field"><label>Cabeçalho de autenticação (opcional)</label><input type="text" name="auth_header" placeholder="Bearer xxxxx" /></div>
+      <div class="ep-field"><label>Sincronizar a cada (minutos)</label><input type="number" name="intervalo_minutos" value="360" min="5" /></div>
+      <div class="ep-field"><label>Caminho da lista (opcional)</label><input type="text" name="campo_lista" placeholder='Ex: data · result.items (deixe vazio se a raiz já for o array)' /></div>
+
+      <button class="btn" type="button" style="width:100%;justify-content:center;margin-bottom:12px" onclick="testarConexao(this.closest('form'), 'test-result-novo')">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Testar conexão
+      </button>
+      <div class="int-test-result" id="test-result-novo"></div>
+      <datalist id="campos-novo"></datalist>
+
+      <div class="ep-field"><label>Campo do código</label><input type="text" name="campo_codigo" list="campos-novo" placeholder="Ex: sku" required /></div>
+      <div class="ep-field"><label>Campo do nome</label><input type="text" name="campo_nome" list="campos-novo" placeholder="Ex: descricao" required /></div>
+      <div class="ep-field-row">
+        <div class="ep-field"><label>Campo da unidade (opcional)</label><input type="text" name="campo_unidade" list="campos-novo" placeholder="Ex: unidade" /></div>
+        <div class="ep-field"><label>Campo do custo (opcional)</label><input type="text" name="campo_custo_unitario" list="campos-novo" placeholder="Ex: preco" /></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:18px;cursor:pointer">
+        <span class="toggle-pill"><input type="checkbox" name="ativo" /><span class="toggle-slider"></span></span>
+        <span style="font-size:12px;color:var(--txt2)">Ativar sincronização automática já ao criar</span>
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn" type="button" onclick="document.getElementById('nova-integracao-overlay').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" type="submit">Criar integração</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="sec-title">Integrações cadastradas</div>
+
+<% if (!integracoes.length) { %>
+  <div class="empty">
+    <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/></svg>
+    <h3>Nenhuma integração cadastrada</h3>
+    <p>Crie uma integração para sincronizar insumos ou embalagens automaticamente a partir de uma API externa.</p>
+  </div>
+<% } else { %>
+  <% integracoes.forEach(function (integ) { %>
+    <% var mp = integ.mapeamento || {};
+       var ultimaSinc = integ.ultima_sincronizacao ? new Date(integ.ultima_sincronizacao).toLocaleString('pt-BR') : 'Nunca sincronizou';
+       var statusCls = integ.ultimo_status === 'erro' ? 'p-bad' : (integ.ultimo_status === 'sucesso' ? 'p-ok' : 'p-warn');
+       var statusLbl = integ.ultimo_status === 'erro' ? 'Erro' : (integ.ultimo_status === 'sucesso' ? 'Sucesso' : 'Sem sincronização');
+    %>
+    <div class="dish-card">
+      <div class="dish-hdr" onclick="this.closest('.dish-card').classList.toggle('open')">
+        <div class="thumb thumb-sm<%= integ.tipo_padrao === 'EMBALAGEM' ? ' emb' : '' %>">
+          <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/></svg>
+        </div>
+        <div class="dish-hdr-txt">
+          <span class="cod"><%= integ.tipo_padrao %> · a cada <%= integ.intervalo_minutos %> min</span>
+          <span class="cname"><%= integ.nome %></span>
+        </div>
+        <span class="pill <%= integ.ativo ? 'p-ok' : 'p-bad' %>" style="margin-right:6px"><%= integ.ativo ? 'Ativa' : 'Inativa' %></span>
+        <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="dish-stats">
+        <div class="st"><span class="st-l">Última sincronização</span><span class="st-v"><%= ultimaSinc %></span></div>
+        <div class="st"><span class="st-l">Resultado</span><span class="pill <%= statusCls %>"><%= statusLbl %></span></div>
+        <div class="st" style="width:100%"><span class="st-l">URL</span><span class="st-v muted" style="word-break:break-all;font-size:10.5px"><%= integ.url %></span></div>
+      </div>
+      <div class="dish-body">
+        <% if (integ.ultimo_resultado) { %>
+          <p style="font-size:11px;color:var(--txt3);margin-bottom:10px"><%= integ.ultimo_resultado %></p>
+        <% } %>
+        <form method="post" action="/api-integracoes/<%= integ.id %>">
+          <div class="ep-field"><label>Nome da integração</label><input type="text" name="nome" value="<%= integ.nome %>" required /></div>
+          <div class="ep-field"><label>URL</label><input type="text" name="url" value="<%= integ.url %>" required /></div>
+          <div class="ep-field-row">
+            <div class="ep-field"><label>Método</label>
+              <select name="metodo">
+                <option value="GET" <%= integ.metodo === 'GET' ? 'selected' : '' %>>GET</option>
+                <option value="POST" <%= integ.metodo === 'POST' ? 'selected' : '' %>>POST</option>
+              </select>
+            </div>
+            <div class="ep-field"><label>Tipo sincronizado</label>
+              <select name="tipo_padrao">
+                <option value="INSUMO" <%= integ.tipo_padrao === 'INSUMO' ? 'selected' : '' %>>Insumo</option>
+                <option value="EMBALAGEM" <%= integ.tipo_padrao === 'EMBALAGEM' ? 'selected' : '' %>>Embalagem</option>
+              </select>
+            </div>
+          </div>
+          <div class="ep-field"><label>Cabeçalho de autenticação (opcional)</label><input type="text" name="auth_header" value="<%= integ.auth_header || '' %>" placeholder="Bearer xxxxx" /></div>
+          <div class="ep-field"><label>Sincronizar a cada (minutos)</label><input type="number" name="intervalo_minutos" value="<%= integ.intervalo_minutos %>" min="5" /></div>
+          <div class="ep-field"><label>Caminho da lista (opcional)</label><input type="text" name="campo_lista" value="<%= mp.lista || '' %>" placeholder='Ex: data · result.items (deixe vazio se a raiz já for o array)' /></div>
+
+          <button class="btn" type="button" style="width:100%;justify-content:center;margin-bottom:12px" onclick="testarConexao(this.closest('form'), 'test-result-<%= integ.id %>')">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Testar conexão
+          </button>
+          <div class="int-test-result" id="test-result-<%= integ.id %>"></div>
+          <datalist id="campos-<%= integ.id %>"></datalist>
+
+          <div class="ep-field"><label>Campo do código</label><input type="text" name="campo_codigo" list="campos-<%= integ.id %>" value="<%= mp.codigo || '' %>" required /></div>
+          <div class="ep-field"><label>Campo do nome</label><input type="text" name="campo_nome" list="campos-<%= integ.id %>" value="<%= mp.nome || '' %>" required /></div>
+          <div class="ep-field-row">
+            <div class="ep-field"><label>Campo da unidade (opcional)</label><input type="text" name="campo_unidade" list="campos-<%= integ.id %>" value="<%= mp.unidade || '' %>" /></div>
+            <div class="ep-field"><label>Campo do custo (opcional)</label><input type="text" name="campo_custo_unitario" list="campos-<%= integ.id %>" value="<%= mp.custo_unitario || '' %>" /></div>
+          </div>
+          <button class="btn btn-p" type="submit" style="width:100%;justify-content:center">Salvar alterações</button>
+        </form>
+
+        <div class="int-actions">
+          <form method="post" action="/api-integracoes/<%= integ.id %>/sincronizar">
+            <button class="btn btn-pr" type="submit">Sincronizar agora</button>
+          </form>
+          <form method="post" action="/api-integracoes/<%= integ.id %>/ativar">
+            <button class="btn" type="submit"><%= integ.ativo ? 'Desativar' : 'Ativar' %></button>
+          </form>
+          <form method="post" action="/api-integracoes/<%= integ.id %>/excluir"
+            onsubmit="return appModal.guard(event, this, { title:'Excluir integração', text:'Excluir &#39;<%= integ.nome %>&#39;? Os insumos já sincronizados não serão removidos.', confirmLabel:'Excluir' })">
+            <button class="btn btn-danger" type="submit">Excluir</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+<% } %>
+
+<script>
+  async function testarConexao(form, resultId) {
+    var resultEl = document.getElementById(resultId);
+    var url = form.querySelector('[name="url"]').value;
+    var metodo = form.querySelector('[name="metodo"]').value;
+    var authEl = form.querySelector('[name="auth_header"]');
+    var auth = authEl ? authEl.value : '';
+    var listaEl = form.querySelector('[name="campo_lista"]');
+    var caminhoLista = listaEl ? listaEl.value : '';
+
+    resultEl.className = 'int-test-result';
+    resultEl.textContent = 'Testando conexão...';
+
+    try {
+      var resp = await fetch('/api-integracoes/testar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, metodo: metodo, auth_header: auth, campo_lista: caminhoLista }),
+      });
+      var data = await resp.json();
+      if (!data.ok) {
+        resultEl.className = 'int-test-result err';
+        resultEl.textContent = 'Erro: ' + data.erro;
+        return;
+      }
+      if (data.aviso) {
+        resultEl.className = 'int-test-result';
+        resultEl.textContent = data.aviso;
+        return;
+      }
+      resultEl.className = 'int-test-result ok';
+      resultEl.textContent = data.total + ' item(ns) recebido(s). Campos detectados: ' + data.campos.join(', ');
+
+      var datalist = form.querySelector('datalist');
+      if (datalist) {
+        datalist.innerHTML = '';
+        data.campos.forEach(function (campo) {
+          var opt = document.createElement('option');
+          opt.value = campo;
+          datalist.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      resultEl.className = 'int-test-result err';
+      resultEl.textContent = 'Erro: ' + err.message;
+    }
+  }
+</script>

@@ -1,0 +1,197 @@
+<div>
+
+  <div style="margin-bottom:20px">
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:3px">Transparencia e auditoria</div>
+    <div class="sec-title" style="margin:0 0 4px">Como cada coluna e calculada</div>
+    <div style="font-size:13px;color:var(--txt2);line-height:1.6">Todos os calculos partem dos dados do CSV importado ou cadastrados no editor. Nenhum valor e inventado — voce pode conferir linha por linha.</div>
+  </div>
+
+  <!-- LEGEND -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;background:#fff;border-radius:var(--radius);margin-bottom:18px;border:1px solid var(--brd)">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2)"><div style="width:10px;height:10px;border-radius:50%;background:#1d4ed8;flex-shrink:0"></div>dado cadastrado</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2)"><div style="width:10px;height:10px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>resultado calculado</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2)"><div style="width:10px;height:10px;border-radius:50%;background:#d97706;flex-shrink:0"></div>configuravel pelo usuario</div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="ftabs">
+    <button class="ftab on" onclick="fSw('custos',this)">Custos</button>
+    <button class="ftab" onclick="fSw('preco',this)">Preco sugerido</button>
+    <button class="ftab" onclick="fSw('cmv',this)">CMV %</button>
+    <button class="ftab" onclick="fSw('margem',this)">Margem de lucro</button>
+    <button class="ftab" onclick="fSw('peso',this)">Peso total</button>
+  </div>
+
+  <!-- CUSTOS -->
+  <div class="fpanel on" id="fp-custos">
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Custo de insumos</div>
+        <div class="fcd">Soma de todos os itens do tipo INSUMO na ficha — proteinas, arroz, molhos e demais ingredientes de preparo.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Custo insumos</span><span class="fsep">=</span>
+        <span class="frhs">&Sigma; <span class="fv">custo_total</span> de cada item onde <span class="fv">tipo</span> <span class="fop">= "INSUMO"</span></span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un</div>
+        <div class="fex-row"><span>Salmao Fresco (120g)</span><span class="fv-b">R$ 7,20</span></div>
+        <div class="fex-row"><span>Arroz Japones (150g)</span><span class="fv-b">R$ 1,38</span></div>
+        <div class="fex-row"><span>Cream Cheese (40g)</span><span class="fv-b">R$ 0,76</span></div>
+        <div class="fex-row"><span>Farinha Panko (40g)</span><span class="fv-b">R$ 0,64</span></div>
+        <div class="fex-row"><span>Oleo de Soja (30ml)</span><span class="fv-b">R$ 0,27</span></div>
+        <div class="fex-row"><span>Molho Tare (20ml)</span><span class="fv-b">R$ 0,36</span></div>
+        <div class="fex-row"><span>Molho Shoyu (20ml)</span><span class="fv-b">R$ 0,27</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Total insumos</span><span class="fv-g">R$ 10,88</span></div>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Custo de embalagem</div>
+        <div class="fcd">Soma dos itens tipo EMBALAGEM. Nao entra no preco sugerido, mas compoe o custo total.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Custo embalagem</span><span class="fsep">=</span>
+        <span class="frhs">&Sigma; <span class="fv">custo_total</span> onde <span class="fv">tipo</span> <span class="fop">= "EMBALAGEM"</span></span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un</div>
+        <div class="fex-row"><span>Embalagem Sushi 10 un</span><span class="fv-b">R$ 1,50</span></div>
+        <div class="fex-row"><span>Hashi de Bambu</span><span class="fv-b">R$ 0,14</span></div>
+        <div class="fex-row"><span>Pote para Molho 30ml</span><span class="fv-b">R$ 0,15</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Total embalagem</span><span class="fv-g">R$ 1,79</span></div>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Custo total</div>
+        <div class="fcd">Custo real do prato pronto e embalado. Base para CMV e margem.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Custo total</span><span class="fsep">=</span>
+        <span class="frhs"><span class="fg">Custo insumos</span> <span class="fop">+</span> <span class="fg">Custo embalagem</span></span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un</div>
+        <div class="fex-row"><span>Custo insumos</span><span class="fv-g">R$ 10,88</span></div>
+        <div class="fex-row"><span>Custo embalagem</span><span class="fv-g">R$ 1,79</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Custo total</span><span class="fv-r">R$ 12,67</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRECO -->
+  <div class="fpanel" id="fp-preco">
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Preco sugerido</div>
+        <div class="fcd">Calculado apenas sobre os insumos (sem embalagem). O markup e configuravel na barra superior — padrao 3,5x.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Preco sugerido</span><span class="fsep">=</span>
+        <span class="frhs"><span class="fg">Custo insumos</span> <span class="fop">x</span> <span class="fa">Markup</span></span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un (markup 3,5x)</div>
+        <div class="fex-row"><span>Custo insumos</span><span class="fv-g">R$ 10,88</span></div>
+        <div class="fex-row"><span>Markup configurado</span><span class="fv-a">3,5x</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Preco sugerido</span><span class="fv-g">R$ 38,08</span></div>
+      </div>
+      <div class="fnote">A embalagem pode ser deliberadamente excluida deste calculo via toggle "Preco sugerido c/embalagem" na barra de Fichas — quando desligado, o preco sugerido considera apenas insumos. O markup pode ser alterado no campo da barra superior e todos os valores atualizam imediatamente.</div>
+    </div>
+  </div>
+
+  <!-- CMV -->
+  <div class="fpanel" id="fp-cmv">
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">CMV — custo da mercadoria vendida</div>
+        <div class="fcd">Percentual do preco de venda que representa o custo do prato. Requer que o preco de venda seja informado em cada ficha.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">CMV %</span><span class="fsep">=</span>
+        <span class="frhs"><span class="fop">(</span><span class="fr">Custo total</span> <span class="fop">&divide;</span> <span class="fv">Preco de venda</span><span class="fop">)</span> <span class="fop">x</span> 100</span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un (venda R$ 32,90)</div>
+        <div class="fex-row"><span>Custo total</span><span class="fv-r">R$ 12,67</span></div>
+        <div class="fex-row"><span>Preco de venda</span><span class="fv-b">R$ 32,90</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>CMV</span><span class="fv-a">38,5%</span></div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;font-family:var(--mono)">(12,67 &divide; 32,90) &times; 100 = 38,51%</div>
+      </div>
+    </div>
+    <div style="display:flex;border-radius:var(--radius);overflow:hidden;border:1px solid var(--brd);margin-bottom:10px">
+      <div style="flex:1;padding:10px;text-align:center;background:var(--gn-bg);color:var(--gn-d);font-size:12px;font-weight:600">&le; 35%<br><span style="font-weight:400;font-size:11px">Excelente</span></div>
+      <div style="flex:1;padding:10px;text-align:center;background:var(--am-bg);color:var(--am);font-size:12px;font-weight:600;border-left:1px solid var(--brd);border-right:1px solid var(--brd)">36 – 50%<br><span style="font-weight:400;font-size:11px">Atencao</span></div>
+      <div style="flex:1;padding:10px;text-align:center;background:var(--rd-bg);color:var(--rd-d);font-size:12px;font-weight:600">&gt; 50%<br><span style="font-weight:400;font-size:11px">Alto — revisar</span></div>
+    </div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;padding:0 2px">Meta ideal para gastronomia: 25% a 35%. Acima de 50% o prato compromete a margem do negocio.</div>
+  </div>
+
+  <!-- MARGEM -->
+  <div class="fpanel" id="fp-margem">
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Margem de lucro bruto</div>
+        <div class="fcd">Percentual do preco de venda que sobra apos deduzir o custo do prato. Margem + CMV = 100% sempre.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Margem %</span><span class="fsep">=</span>
+        <span class="frhs"><span class="fop">(</span><span class="fv">Preco de venda</span> <span class="fop">&minus;</span> <span class="fr">Custo total</span><span class="fop">)</span> <span class="fop">&divide;</span> <span class="fv">Preco de venda</span> <span class="fop">x</span> 100</span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un (venda R$ 32,90)</div>
+        <div class="fex-row"><span>Preco de venda</span><span class="fv-b">R$ 32,90</span></div>
+        <div class="fex-row"><span>Custo total</span><span class="fv-r">R$ 12,67</span></div>
+        <div class="fex-row"><span>Lucro bruto</span><span class="fv-g">R$ 20,23</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Margem</span><span class="fv-g">61,5%</span></div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;font-family:var(--mono)">(20,23 &divide; 32,90) &times; 100 = 61,49%</div>
+      </div>
+      <div class="fnote">Este percentual cobre custos fixos, mao de obra e lucro liquido. Nao confundir com lucro liquido — aqui ainda nao estao descontados aluguel, salarios e outros fixos.</div>
+    </div>
+  </div>
+
+  <!-- PESO -->
+  <div class="fpanel" id="fp-peso">
+    <div class="fcard">
+      <div class="fch">
+        <div class="fcn">Peso total do prato</div>
+        <div class="fcd">Soma da quantidade de todos os ingredientes medidos em gramas (g) ou mililitros (ml). Itens em "un" nao entram — nao tem massa mensuravel.</div>
+      </div>
+      <div class="fformula">
+        <span class="flhs">Peso total</span><span class="fsep">=</span>
+        <span class="frhs">&Sigma; <span class="fv">quantidade</span> onde <span class="fv">unidade</span> <span class="fop">= "g" ou "ml"</span></span>
+      </div>
+      <div class="fex">
+        <div class="fex-title">Exemplo — Hot Filadelia 10 un</div>
+        <div class="fex-row"><span>Salmao Fresco</span><span class="fv-b">120 g</span></div>
+        <div class="fex-row"><span>Arroz Japones</span><span class="fv-b">150 g</span></div>
+        <div class="fex-row"><span>Cream Cheese</span><span class="fv-b">40 g</span></div>
+        <div class="fex-row"><span>Farinha Panko</span><span class="fv-b">40 g</span></div>
+        <div class="fex-row"><span>Oleo de Soja</span><span class="fv-b">30 ml</span></div>
+        <div class="fex-row"><span>Molho Tare</span><span class="fv-b">20 ml</span></div>
+        <div class="fex-row"><span>Molho Shoyu</span><span class="fv-b">20 ml</span></div>
+        <div class="fex-row" style="opacity:.45"><span>Embalagens (un)</span><span>ignorado</span></div>
+        <hr class="fdiv" />
+        <div class="fex-row fex-total"><span>Peso total</span><span class="fv-g">420 g = 0,420 kg</span></div>
+      </div>
+      <div class="fnote">Pesos &ge; 1.000 g sao exibidos em kg com 3 casas decimais. Util para conferir rendimento e controle de estoque.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function fSw(id, btn) {
+  document.querySelectorAll('.fpanel').forEach(function (p) { p.classList.remove('on'); });
+  document.querySelectorAll('.ftab').forEach(function (t) { t.classList.remove('on'); });
+  document.getElementById('fp-' + id).classList.add('on');
+  btn.classList.add('on');
+}
+</script>

@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Diz ao Tailwind v4 para escanear as views EJS e os JS do cliente */
+@source "../views/**/*.ejs";
+@source "../public/**/*.js";
+@source "../client/**/*.js";

@@ -1,0 +1,101 @@
+<div class="modal-overlay" id="app-modal-overlay">
+  <div class="modal-card" id="app-modal-card">
+    <div class="modal-icon" id="app-modal-icon"></div>
+    <div class="modal-title" id="app-modal-title"></div>
+    <div class="modal-text" id="app-modal-text"></div>
+    <div class="modal-actions" id="app-modal-actions"></div>
+  </div>
+</div>
+
+<script>
+  // Modal generico em substituicao a confirm()/alert() nativos do navegador.
+  // Uso para confirmacao: appModal.confirm({ title, text, confirmLabel, cancelLabel, variant, onConfirm })
+  // Uso em forms: <form onsubmit="return appModal.guard(event, this, { title:'...', text:'...' })">
+  window.appModal = (function () {
+    var ICONS = {
+      danger: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+      info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
+
+    function els() {
+      return {
+        overlay: document.getElementById('app-modal-overlay'),
+        icon: document.getElementById('app-modal-icon'),
+        title: document.getElementById('app-modal-title'),
+        text: document.getElementById('app-modal-text'),
+        actions: document.getElementById('app-modal-actions')
+      };
+    }
+
+    function close() {
+      var e = els();
+      e.overlay.classList.remove('open');
+    }
+
+    function confirm(opts) {
+      opts = opts || {};
+      var variant = opts.variant === 'info' ? 'info' : 'danger';
+      var e = els();
+      e.icon.className = 'modal-icon ' + variant;
+      e.icon.innerHTML = ICONS[variant];
+      e.title.textContent = opts.title || 'Confirmar ação';
+      e.text.textContent = opts.text || 'Tem certeza que deseja continuar?';
+      e.actions.innerHTML = '';
+
+      var btnCancel = document.createElement('button');
+      btnCancel.type = 'button';
+      btnCancel.className = 'btn';
+      btnCancel.textContent = opts.cancelLabel || 'Cancelar';
+      btnCancel.onclick = close;
+
+      var btnOk = document.createElement('button');
+      btnOk.type = 'button';
+      btnOk.className = 'btn ' + (variant === 'info' ? 'btn-p' : 'btn-danger');
+      btnOk.textContent = opts.confirmLabel || 'Excluir';
+      btnOk.onclick = function () {
+        close();
+        if (typeof opts.onConfirm === 'function') opts.onConfirm();
+      };
+
+      e.actions.appendChild(btnCancel);
+      e.actions.appendChild(btnOk);
+      e.overlay.classList.add('open');
+    }
+
+    // Intercepta o submit de um <form> de exclusao e mostra o modal antes de
+    // de fato enviar. Retorna false para o onsubmit cancelar o envio original.
+    function guard(event, form, opts) {
+      if (event && event.preventDefault) event.preventDefault();
+      confirm(Object.assign({}, opts, {
+        onConfirm: function () {
+          if (typeof HTMLFormElement.prototype.requestSubmit === 'function') {
+            form.requestSubmit();
+          } else {
+            form.submit();
+          }
+        }
+      }));
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Fecha qualquer modal (este componente ou modais customizados na
+      // pagina, ex.: "Novo prato" no editor) ao clicar fora do cartao ou
+      // pressionar Esc.
+      document.querySelectorAll('.modal-overlay').forEach(function (ov) {
+        ov.addEventListener('click', function (ev) {
+          if (ev.target === ov) ov.classList.remove('open');
+        });
+      });
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.open').forEach(function (ov) {
+            ov.classList.remove('open');
+          });
+        }
+      });
+    });
+
+    return { confirm: confirm, guard: guard, close: close };
+  })();
+</script>

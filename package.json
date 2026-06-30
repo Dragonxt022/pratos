@@ -1,0 +1,33 @@
+{
+  "name": "pratos-fichas-tecnicas",
+  "version": "1.0.0",
+  "description": "Aplicacao de ficha tecnica de pratos (MVC, Express 5 + Sequelize)",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "tw:build": "tailwindcss -i ./src/tailwind.css -o ./public/stylesheets/tailwind.css",
+    "tw:watch": "tailwindcss -i ./src/tailwind.css -o ./public/stylesheets/tailwind.css --watch",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^5.0.1",
+    "express-ejs-layouts": "^2.5.1",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.5",
+    "sequelize": "^6.37.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.2",
+    "sequelize-cli": "^6.6.2",
+    "tailwindcss": "^4.3.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,63 @@
+<!-- Modal Novo Prato -->
+<div class="modal-overlay" id="novo-prato-overlay">
+  <div class="modal-card">
+    <div class="modal-icon info"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+    <div class="modal-title">Novo prato</div>
+    <div class="modal-text">Cadastre o codigo, nome e rendimento. Os insumos podem ser adicionados depois.</div>
+    <form method="post" action="/editor" class="modal-form">
+      <div class="ep-field"><label>Codigo</label><input type="text" name="codigo" placeholder="Ex: PR010" required /></div>
+      <div class="ep-field"><label>Nome do prato</label><input type="text" name="nome" placeholder="Nome do prato" required /></div>
+      <div class="ep-field" style="margin-bottom:18px"><label>Rendimento (un)</label><input type="number" name="rendimento" value="1" min="1" /></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" onclick="document.getElementById('novo-prato-overlay').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" type="submit">Criar prato</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-p" type="button" onclick="document.getElementById('novo-prato-overlay').classList.add('open')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Novo prato
+  </button>
+</div>
+
+<% if (!pratos.length) { %>
+  <div class="empty">
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <h3>Nenhum prato cadastrado</h3>
+    <p>Crie um prato ou importe um CSV em <a href="/fichas">Fichas</a>.</p>
+  </div>
+<% } else { %>
+  <div class="pratos-grid">
+    <% pratos.forEach(function(p) {
+         var c = p.calc;
+         var pesoLbl = c.pesoTotal > 0 ? (c.pesoTotal >= 1000 ? (c.pesoTotal / 1000).toFixed(3).replace('.', ',') + ' kg' : c.pesoTotal + ' g') : '-';
+    %>
+      <a class="dish-card editor-list-item" href="/editor/<%= encodeURIComponent(p.prato.codigo) %>">
+        <div class="dish-hdr" style="pointer-events:none">
+          <div class="thumb thumb-sm">
+            <% if (p.prato.imagem_url) { %>
+              <img src="<%= p.prato.imagem_url %>" alt="" />
+            <% } else { %>
+              <svg viewBox="0 0 24 24"><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3zm0 0v7"/><path d="M3 2c0 6 4 6 4 9v9"/></svg>
+            <% } %>
+          </div>
+          <div class="dish-hdr-txt">
+            <span class="cod"><%= p.prato.codigo %></span>
+            <span class="cname"><%= p.prato.nome %></span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="dish-stats">
+          <div class="st"><span class="st-l">Custo insumos</span><span class="st-v red">R$ <%= c.custoInsumos.toFixed(2).replace('.', ',') %></span></div>
+          <div class="st"><span class="st-l">Embalagem</span><span class="st-v">R$ <%= c.custoEmbalagem.toFixed(2).replace('.', ',') %></span></div>
+          <div class="st"><span class="st-l">Custo total</span><span class="st-v red">R$ <%= c.custoTotal.toFixed(2).replace('.', ',') %></span></div>
+          <div class="st"><span class="st-l">Peso total</span><span class="st-v"><%= pesoLbl %></span></div>
+          <div class="st"><span class="st-l">Rendimento</span><span class="st-v"><%= p.prato.rendimento %> un</span></div>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+<% } %>
