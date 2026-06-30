@@ -1,9 +1,44 @@
+# Node dependencies
 node_modules/
+
+# Environment files
 .env
-npm-debug.log
+.env.*
+
+# Logs
+logs/
+npm-debug.log*
 *.log
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Build / distribution
 dist/
 dist-electron/
+build/
+out/
 release/
+
+# Binaries
 *.exe
+*.dll
+*.pdb
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Uploads / generated files
+uploads/
+public/uploads/
+
+# Coverage / test output
+coverage/
+.nyc_output/
+
+# Cache / temp
+.cache/
+tmp/
+temp/
