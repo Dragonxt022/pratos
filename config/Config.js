@@ -1,9 +1,8 @@
+const path = require('path');
 require('./env');
 
-// Config central da aplicacao. Nenhum modulo deve ler process.env
-// diretamente fora deste arquivo (e de config/config.js, usado so pelo
-// sequelize-cli) - assim toda variavel sensivel fica centralizada e
-// vinda do .env.
+const dialect = process.env.DB_DIALECT || 'sqlite';
+
 const Config = {
   app: {
     name: process.env.APP_NAME || 'Pratos - Fichas Tecnicas',
@@ -11,12 +10,18 @@ const Config = {
     port: parseInt(process.env.PORT, 10) || 3000,
   },
   db: {
-    host: process.env.DB_HOST,
+    dialect,
+    // SQLite
+    storage: process.env.DB_STORAGE || path.join(__dirname, '..', 'database.sqlite'),
+    // MySQL
+    host: process.env.DB_HOST || '127.0.0.1',
     port: parseInt(process.env.DB_PORT, 10) || 3306,
-    name: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    pass: process.env.DB_PASS,
-    dialect: process.env.DB_DIALECT || 'mysql',
+    name: process.env.DB_NAME || '',
+    user: process.env.DB_USER || '',
+    pass: process.env.DB_PASS || '',
+  },
+  uploads: {
+    dir: process.env.UPLOADS_PATH || path.join(__dirname, '..', 'public', 'uploads', 'pratos'),
   },
   integrations: {
     eventBroker: {

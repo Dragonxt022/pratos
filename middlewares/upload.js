@@ -2,7 +2,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const uploadsDir = path.resolve(__dirname, '..', 'public', 'uploads', 'pratos');
+const uploadsDir = process.env.UPLOADS_PATH
+  ? path.resolve(process.env.UPLOADS_PATH)
+  : path.resolve(__dirname, '..', 'public', 'uploads', 'pratos');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 // CSV fica em memoria - e so texto, processado e descartado pelo controller.

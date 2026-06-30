@@ -6,15 +6,24 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
-const config = require('../config/database.js')[env];
+const Config = require('../config/Config');
 const db = {};
 
 let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+
+if (Config.db.dialect === 'mysql') {
+  sequelize = new Sequelize(Config.db.name, Config.db.user, Config.db.pass, {
+    host: Config.db.host,
+    port: Config.db.port,
+    dialect: 'mysql',
+    logging: false,
+  });
 } else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: Config.db.storage,
+    logging: false,
+  });
 }
 
 fs

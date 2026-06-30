@@ -1,22 +1,26 @@
+const path = require('path');
 require('./env');
 
-// Config exclusivo do sequelize-cli (migrations/seeds). A aplicacao em si
-// usa config/Config.js - este arquivo existe so porque o sequelize-cli
-// espera um config/<algo>.js|json no formato abaixo (apontado pelo
-// .sequelizerc).
-function envConfig() {
-  return {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASS || null,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT, 10) || 3306,
-    dialect: process.env.DB_DIALECT || 'mysql',
-  };
-}
+const dialect = process.env.DB_DIALECT || 'sqlite';
+
+const mysqlConfig = {
+  dialect: 'mysql',
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: parseInt(process.env.DB_PORT, 10) || 3306,
+  database: process.env.DB_NAME || '',
+  username: process.env.DB_USER || '',
+  password: process.env.DB_PASS || '',
+};
+
+const sqliteConfig = {
+  dialect: 'sqlite',
+  storage: process.env.DB_STORAGE || path.join(__dirname, '..', 'database.sqlite'),
+};
+
+const config = dialect === 'mysql' ? mysqlConfig : sqliteConfig;
 
 module.exports = {
-  development: envConfig(),
-  test: envConfig(),
-  production: envConfig(),
+  development: config,
+  test: config,
+  production: config,
 };

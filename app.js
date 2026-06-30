@@ -7,6 +7,7 @@ const expressLayouts = require('express-ejs-layouts');
 const logger = require('./utils/logger');
 const routes = require('./routes');
 const iniciarAgendadorIntegracoes = require('./utils/agendadorIntegracoes');
+const { sequelize } = require('./models');
 
 const app = express();
 
@@ -22,8 +23,12 @@ app.set('layout', 'layouts/layout');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// ── ARQUIVOS ESTATICOS (css, uploads de imagem dos pratos) ──
+// ── ARQUIVOS ESTATICOS ──
 app.use(express.static(path.join(__dirname, 'public')));
+// Quando UPLOADS_PATH aponta para fora do public/ (modo Electron/userData)
+if (process.env.UPLOADS_PATH) {
+  app.use('/uploads/pratos', express.static(process.env.UPLOADS_PATH));
+}
 
 // ── LOCALS PADRAO PARA AS VIEWS ──
 // currentPath alimenta o estado "active" das abas em partials/header.ejs.
@@ -57,9 +62,28 @@ app.use((err, req, res, next) => {
   res.status(status).send('Ocorreu um erro ao processar a requisicao.');
 });
 
-app.listen(Config.app.port, () => {
-  logger.info(`${Config.app.name} rodando em http://localhost:${Config.app.port} [${Config.app.env}]`);
-  iniciarAgendadorIntegracoes();
-});
+async function start() {
+  if (Config.db.dialect === 'sqlite') {
+    await sequelize.sync();
+    logger.info('SQLite: banco de dados pronto.');
+  } else {
+    await sequelize.authenticate();
+    logger.info(`MySQL: conectado em ${Config.db.host}:${Config.db.port}/${Config.db.name}`);
+  }
+  return new Promise((resolve) => {
+    app.listen(Config.app.port, () => {
+      logger.info(`${Config.app.name} rodando em http://localhost:${Config.app.port} [${Config.app.env}]`);
+      iniciarAgendadorIntegracoes();
+      resolve();
+    });
+  });
+}
 
-module.exports = app;
+if (require.main === module) {
+  start().catch((err) => {
+    logger.error('Erro fatal ao iniciar o servidor:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { app, start };
