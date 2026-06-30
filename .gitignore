@@ -4,4 +4,6 @@ npm-debug.log
 *.log
 .DS_Store
 dist/
-dis-electron/
+dist-electron/
+release/
+*.exe
