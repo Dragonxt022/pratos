@@ -1,5 +1,3 @@
-Aqui está o README.md completo e atualizado com os scripts de automação:
-
 ```markdown
 # 📋 Guia Completo: Configuração e Execução do Projeto "Pratos - Fichas Técnicas"
 
@@ -626,5 +624,3 @@ vim README.md
 COLE O CONTEÚDO AQUI
 "@ | Out-File -FilePath README.md -Encoding utf8
 ```
-
-O README.md está pronto para ser a documentação oficial do seu projeto! 🎉
