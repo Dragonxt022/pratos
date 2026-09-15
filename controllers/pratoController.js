@@ -1,4 +1,4 @@
-const { Prato, Insumo, ItemPrato, sequelize } = require('../models');
+const { Prato, Insumo, ItemPrato, HistoricoPrecoPrato, sequelize } = require('../models');
 const getConfiguracao = require('./helpers/getConfiguracao');
 const registrarHistoricoPreco = require('./helpers/registrarHistoricoPreco');
 const registrarHistoricoPrecoInsumo = require('./helpers/registrarHistoricoPrecoInsumo');
@@ -16,6 +16,22 @@ function serializeItens(itens) {
     quantidade: Number(item.quantidade),
     custo_total: Number(item.custo_total),
   }));
+}
+
+// Remove prato(s) e seus dependentes (itens e historico) de forma explicita.
+// Necessario porque o sync() do SQLite cria as FKs de prato_id como
+// ON DELETE NO ACTION e o destroy em massa nao dispara os hooks de cascata
+// das associacoes, o que resultava em FOREIGN KEY constraint failed.
+async function removerPratos(where) {
+  return sequelize.transaction(async (t) => {
+    const pratos = await Prato.findAll({ where, attributes: ['id'], transaction: t });
+    const ids = pratos.map((p) => p.id);
+    if (!ids.length) return 0;
+    await HistoricoPrecoPrato.destroy({ where: { prato_id: ids }, transaction: t });
+    await ItemPrato.destroy({ where: { prato_id: ids }, transaction: t });
+    await Prato.destroy({ where: { id: ids }, transaction: t });
+    return ids.length;
+  });
 }
 
 // GET /fichas
@@ -48,6 +64,39 @@ async function list(req, res, next) {
   }
 }
 
+// GET /fichas/imprimir — folha A4 com 4 fichas por pagina.
+// Respeita o filtro de busca (q) e permite incluir/omitir as fotos (foto=0).
+async function imprimir(req, res, next) {
+  try {
+    const q = (req.query.q || '').trim().toLowerCase();
+    const incluirFotos = req.query.foto !== '0';
+    const configuracao = await getConfiguracao();
+    const pratos = await Prato.findAll({
+      include: [{ model: ItemPrato, as: 'itens', include: [{ model: Insumo, as: 'insumo' }] }],
+      order: [['nome', 'ASC']],
+    });
+
+    const lista = pratos
+      .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q))
+      .map((prato) => ({
+        prato,
+        calc: calcularPrato(prato, configuracao),
+        itens: serializeItens(prato.itens),
+      }));
+
+    res.render('fichas-impressao', {
+      title: 'Impressao de Fichas',
+      layout: false,
+      pratos: lista,
+      search: req.query.q || '',
+      incluirFotos,
+      configuracao,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // POST /fichas/:codigo/preco-venda
 async function updatePrecoVenda(req, res, next) {
   try {
@@ -62,7 +111,7 @@ async function updatePrecoVenda(req, res, next) {
 }
 
 // GET /editor — lista de pratos com stats calculados
-async function editorLista(_req, res, next) {
+async function editorLista(req, res, next) {
   try {
     const configuracao = await getConfiguracao();
     const pratos = await Prato.findAll({
@@ -74,7 +123,11 @@ async function editorLista(_req, res, next) {
       calc: calcularPrato(prato, configuracao),
       itens: serializeItens(prato.itens),
     }));
-    res.render('editor', { title: 'Editor de Pratos', pratos: lista });
+    res.render('editor', {
+      title: 'Editor de Pratos',
+      pratos: lista,
+      mensagem: req.query.excluidos ? `${req.query.excluidos} prato(s) excluido(s).` : null,
+    });
   } catch (error) {
     next(error);
   }
@@ -139,12 +192,26 @@ async function update(req, res, next) {
   }
 }
 
-// DELETE /editor/:codigo
+// POST /editor/:codigo/excluir
 async function destroy(req, res, next) {
   try {
     const { codigo } = req.params;
-    await Prato.destroy({ where: { codigo } });
+    await removerPratos({ codigo });
     res.redirect('/editor');
+  } catch (error) {
+    next(error);
+  }
+}
+
+// POST /editor/excluir-massa — remove varios pratos selecionados na listagem.
+async function destroyMassa(req, res, next) {
+  try {
+    let codigos = req.body.codigos || [];
+    if (!Array.isArray(codigos)) codigos = [codigos];
+    codigos = codigos.map((c) => String(c).trim()).filter(Boolean);
+    if (!codigos.length) return res.redirect('/editor');
+    const total = await removerPratos({ codigo: codigos });
+    res.redirect('/editor?excluidos=' + total);
   } catch (error) {
     next(error);
   }
@@ -337,12 +404,14 @@ async function importCSV(req, res, next) {
 
 module.exports = {
   list,
+  imprimir,
   updatePrecoVenda,
   editorLista,
   editor,
   create,
   update,
   destroy,
+  destroyMassa,
   addItem,
   removeItem,
   uploadImagem,

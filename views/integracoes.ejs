@@ -132,7 +132,10 @@
             <button class="btn" type="submit"><%= integ.ativo ? 'Desativar' : 'Ativar' %></button>
           </form>
           <form method="post" action="/api-integracoes/<%= integ.id %>/excluir"
-            onsubmit="return appModal.guard(event, this, { title:'Excluir integração', text:'Excluir &#39;<%= integ.nome %>&#39;? Os insumos já sincronizados não serão removidos.', confirmLabel:'Excluir' })">
+            data-confirm
+            data-confirm-title="Excluir integração"
+            data-confirm-text="Excluir &quot;<%= integ.nome %>&quot;? Os insumos já sincronizados não serão removidos."
+            data-confirm-label="Excluir">
             <button class="btn btn-danger" type="submit">Excluir</button>
           </form>
         </div>

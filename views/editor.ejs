@@ -16,11 +16,28 @@
   </div>
 </div>
 
+<% if (mensagem) { %>
+  <div class="msg-bar"><%= mensagem %></div>
+<% } %>
+
 <div class="toolbar">
   <button class="btn btn-p" type="button" onclick="document.getElementById('novo-prato-overlay').classList.add('open')">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Novo prato
   </button>
+  <% if (pratos.length) { %>
+    <form id="form-massa" method="post" action="/editor/excluir-massa" class="massa-form"
+      data-confirm
+      data-confirm-title="Excluir pratos"
+      data-confirm-text="Excluir os pratos selecionados? Esta acao nao pode ser desfeita."
+      data-confirm-label="Excluir">
+      <label class="sel-all"><input type="checkbox" id="sel-all" /> Selecionar todos</label>
+      <button class="btn btn-danger" type="submit" id="btn-excluir-massa" disabled>
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Excluir selecionados (<span id="sel-count">0</span>)
+      </button>
+    </form>
+  <% } %>
 </div>
 
 <% if (!pratos.length) { %>
@@ -34,30 +51,62 @@
     <% pratos.forEach(function(p) {
          var c = p.calc;
          var pesoLbl = c.pesoTotal > 0 ? (c.pesoTotal >= 1000 ? (c.pesoTotal / 1000).toFixed(3).replace('.', ',') + ' kg' : c.pesoTotal + ' g') : '-';
+         var href = '/editor/' + encodeURIComponent(p.prato.codigo);
     %>
-      <a class="dish-card editor-list-item" href="/editor/<%= encodeURIComponent(p.prato.codigo) %>">
-        <div class="dish-hdr" style="pointer-events:none">
-          <div class="thumb thumb-sm">
-            <% if (p.prato.imagem_url) { %>
-              <img src="<%= p.prato.imagem_url %>" alt="" />
-            <% } else { %>
-              <svg viewBox="0 0 24 24"><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3zm0 0v7"/><path d="M3 2c0 6 4 6 4 9v9"/></svg>
-            <% } %>
-          </div>
-          <div class="dish-hdr-txt">
-            <span class="cod"><%= p.prato.codigo %></span>
-            <span class="cname"><%= p.prato.nome %></span>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      <div class="dish-card editor-list-item">
+        <div class="dish-hdr">
+          <label class="sel-box" title="Selecionar prato">
+            <input type="checkbox" form="form-massa" name="codigos" value="<%= p.prato.codigo %>" class="chk-prato" />
+          </label>
+          <a class="dish-hdr-main" href="<%= href %>">
+            <div class="thumb thumb-sm">
+              <% if (p.prato.imagem_url) { %>
+                <img src="<%= p.prato.imagem_url %>" alt="" />
+              <% } else { %>
+                <svg viewBox="0 0 24 24"><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3zm0 0v7"/><path d="M3 2c0 6 4 6 4 9v9"/></svg>
+              <% } %>
+            </div>
+            <div class="dish-hdr-txt">
+              <span class="cod"><%= p.prato.codigo %></span>
+              <span class="cname"><%= p.prato.nome %></span>
+            </div>
+            <svg class="chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
-        <div class="dish-stats">
-          <div class="st"><span class="st-l">Custo insumos</span><span class="st-v red">R$ <%= c.custoInsumos.toFixed(2).replace('.', ',') %></span></div>
-          <div class="st"><span class="st-l">Embalagem</span><span class="st-v">R$ <%= c.custoEmbalagem.toFixed(2).replace('.', ',') %></span></div>
-          <div class="st"><span class="st-l">Custo total</span><span class="st-v red">R$ <%= c.custoTotal.toFixed(2).replace('.', ',') %></span></div>
-          <div class="st"><span class="st-l">Peso total</span><span class="st-v"><%= pesoLbl %></span></div>
-          <div class="st"><span class="st-l">Rendimento</span><span class="st-v"><%= p.prato.rendimento %> un</span></div>
-        </div>
-      </a>
+        <a class="dish-stats-link" href="<%= href %>">
+          <div class="dish-stats">
+            <div class="st"><span class="st-l">Custo insumos</span><span class="st-v red">R$ <%= c.custoInsumos.toFixed(2).replace('.', ',') %></span></div>
+            <div class="st"><span class="st-l">Embalagem</span><span class="st-v">R$ <%= c.custoEmbalagem.toFixed(2).replace('.', ',') %></span></div>
+            <div class="st"><span class="st-l">Custo total</span><span class="st-v red">R$ <%= c.custoTotal.toFixed(2).replace('.', ',') %></span></div>
+            <div class="st"><span class="st-l">Peso total</span><span class="st-v"><%= pesoLbl %></span></div>
+            <div class="st"><span class="st-l">Rendimento</span><span class="st-v"><%= p.prato.rendimento %> un</span></div>
+          </div>
+        </a>
+      </div>
     <% }) %>
   </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById('form-massa');
+      if (!form) return;
+      var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk-prato'));
+      var selAll = document.getElementById('sel-all');
+      var btn = document.getElementById('btn-excluir-massa');
+      var count = document.getElementById('sel-count');
+      function atualizar() {
+        var n = boxes.filter(function (b) { return b.checked; }).length;
+        count.textContent = n;
+        btn.disabled = n === 0;
+        selAll.checked = n > 0 && n === boxes.length;
+        selAll.indeterminate = n > 0 && n < boxes.length;
+      }
+      boxes.forEach(function (b) { b.addEventListener('change', atualizar); });
+      selAll.addEventListener('change', function () {
+        boxes.forEach(function (b) { b.checked = selAll.checked; });
+        atualizar();
+      });
+      atualizar();
+    })();
+  </script>
 <% } %>

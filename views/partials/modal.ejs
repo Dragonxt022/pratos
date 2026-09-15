@@ -10,7 +10,10 @@
 <script>
   // Modal generico em substituicao a confirm()/alert() nativos do navegador.
   // Uso para confirmacao: appModal.confirm({ title, text, confirmLabel, cancelLabel, variant, onConfirm })
-  // Uso em forms: <form onsubmit="return appModal.guard(event, this, { title:'...', text:'...' })">
+  // Uso em forms: adicione o atributo data-confirm e os textos via
+  // data-confirm-title / data-confirm-text / data-confirm-label. Os textos vem
+  // de atributos (e nao de JS inline) para nao quebrar com nomes que tenham
+  // apostrofos ou aspas.
   window.appModal = (function () {
     var ICONS = {
       danger: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
@@ -77,6 +80,33 @@
       }));
       return false;
     }
+
+    // Confirma qualquer form marcado com data-confirm antes de enviar. O flag
+    // appConfirmed evita reabrir o modal quando requestSubmit() redispara o
+    // evento submit.
+    document.addEventListener('submit', function (event) {
+      var form = event.target;
+      if (!form || typeof form.hasAttribute !== 'function' || !form.hasAttribute('data-confirm')) return;
+      if (form.dataset.appConfirmed === '1') {
+        delete form.dataset.appConfirmed;
+        return;
+      }
+      event.preventDefault();
+      confirm({
+        title: form.dataset.confirmTitle || 'Confirmar acao',
+        text: form.dataset.confirmText || 'Tem certeza que deseja continuar?',
+        confirmLabel: form.dataset.confirmLabel || 'Confirmar',
+        variant: form.dataset.confirmVariant || 'danger',
+        onConfirm: function () {
+          if (typeof HTMLFormElement.prototype.requestSubmit === 'function') {
+            form.dataset.appConfirmed = '1';
+            form.requestSubmit();
+          } else {
+            form.submit();
+          }
+        }
+      });
+    });
 
     document.addEventListener('DOMContentLoaded', function () {
       // Fecha qualquer modal (este componente ou modais customizados na

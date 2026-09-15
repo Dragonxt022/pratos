@@ -1,0 +1,212 @@
+<%
+  function moeda(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+  function num(v, d) { return Number(v || 0).toFixed(d === undefined ? 1 : d).replace('.', ','); }
+  function pesoLbl(peso) {
+    if (!peso || peso <= 0) return '-';
+    return peso >= 1000 ? num(peso / 1000, 3) + ' kg' : num(peso, 0) + ' g';
+  }
+  var markupLbl = configuracao.markup_inclui_embalagem ? 'Preco sug. (c/emb)' : 'Preco sug. (s/emb)';
+  var cmvLbl = configuracao.cmv_inclui_embalagem ? 'CMV (c/emb)' : 'CMV (s/emb)';
+  var grupos = [];
+  for (var g = 0; g < pratos.length; g += 4) grupos.push(pratos.slice(g, g + 4));
+%>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Figtree', Arial, sans-serif;
+      background: #eef1ee;
+      color: #1c281d;
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    /* Barra de controles (nao aparece na impressao) */
+    .bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 10px 16px; background: #fff; border-bottom: 1px solid #dfe7dd;
+      box-shadow: 0 1px 6px rgba(20,40,20,.06);
+    }
+    .bar h1 { font-size: 14px; margin: 0; flex: 1; font-weight: 700; }
+    .bar .muted { color: #98a695; font-size: 11px; font-weight: 400; }
+    .bar label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+    .bar a, .bar button {
+      font-family: inherit; font-size: 12px; cursor: pointer; text-decoration: none;
+      border: 1px solid #cfe2cb; border-radius: 8px; padding: 8px 14px;
+      background: #fff; color: #1c281d;
+    }
+    .bar button.p { background: #2bb24a; border-color: #2bb24a; color: #fff; font-weight: 600; }
+    .bar button.p:hover { background: #00a63e; }
+    .bar a:hover { background: #f3f9f1; }
+
+    /* Folha A4 */
+    .sheet {
+      width: 210mm; height: 297mm; padding: 8mm; margin: 14px auto;
+      background: #fff; display: grid; gap: 4mm;
+      grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+      box-shadow: 0 4px 18px rgba(20,40,20,.12);
+      page-break-after: always; break-after: page;
+    }
+    .sheet:last-child { page-break-after: auto; break-after: auto; }
+
+    /* Ficha */
+    .ficha {
+      border: 1px solid #cfe2cb; border-radius: 3mm; padding: 3mm;
+      display: flex; flex-direction: column; gap: 2mm; overflow: hidden;
+    }
+    .ficha-top { display: flex; gap: 2.5mm; align-items: flex-start; }
+    .foto-wrap { flex-shrink: 0; }
+    .foto {
+      width: 24mm; height: 24mm; border-radius: 2mm; overflow: hidden;
+      border: 1px solid #e2ede0; background: #f3f9f1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .foto .sem { color: #98a695; font-size: 7px; text-align: center; padding: 2mm; }
+    body.sem-fotos .foto-wrap { display: none; }
+    .ficha-title { min-width: 0; flex: 1; }
+    .ficha-title .cod {
+      display: inline-block; font-size: 7.5px; font-weight: 700; letter-spacing: .04em;
+      color: #60705e; background: #f3f9f1; border: 1px solid #e2ede0;
+      border-radius: 4px; padding: 0 5px; margin-bottom: 2px;
+    }
+    .ficha-title h2 { font-size: 12px; margin: 0; line-height: 1.15; word-break: break-word; }
+    .ficha-title .sub { font-size: 8px; color: #60705e; margin-top: 2px; }
+
+    .sec-ttl {
+      font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: #60705e; border-bottom: 1px solid #e2ede0; padding-bottom: 1px; margin-bottom: 1px;
+    }
+    .sec-ttl.emb { color: #b07a12; }
+    table.comp { width: 100%; border-collapse: collapse; }
+    table.comp th, table.comp td { text-align: left; padding: .5px 0; vertical-align: top; }
+    table.comp th { font-size: 7px; color: #98a695; font-weight: 600; text-transform: uppercase; }
+    table.comp td.q, table.comp th.q { text-align: right; white-space: nowrap; }
+    table.comp td.c, table.comp th.c { text-align: right; white-space: nowrap; }
+    table.comp td.nome { word-break: break-word; }
+    table.comp td.cod { color: #98a695; font-size: 7.5px; }
+    .comp-wrap { flex: 1; overflow: hidden; }
+
+    .rodape {
+      margin-top: auto; border-top: 1px solid #e2ede0; padding-top: 1.5mm;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1mm 2mm;
+    }
+    .rodape .item { min-width: 0; }
+    .rodape .lbl { font-size: 6.8px; color: #98a695; text-transform: uppercase; letter-spacing: .03em; }
+    .rodape .val { font-size: 9px; font-weight: 600; }
+    .rodape .val.rd { color: #e15046; }
+    .rodape .val.gn { color: #00a63e; }
+
+    .vazio { padding: 40px; text-align: center; color: #60705e; font-size: 14px; }
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      body { background: #fff; }
+      .bar { display: none !important; }
+      .sheet { margin: 0; box-shadow: none; width: 210mm; height: 297mm; }
+    }
+  </style>
+</head>
+<body class="<%= incluirFotos ? '' : 'sem-fotos' %>">
+  <div class="bar">
+    <a href="/fichas<%= search ? ('?q=' + encodeURIComponent(search)) : '' %>">&larr; Voltar</a>
+    <h1>Impressao de fichas <span class="muted">&middot; <%= pratos.length %> prato(s) &middot; 4 por folha A4<%= search ? ' &middot; filtro: "' + search + '"' : '' %></span></h1>
+    <label>
+      <input type="checkbox" id="toggle-fotos" <%= incluirFotos ? 'checked' : '' %>
+        onchange="document.body.classList.toggle('sem-fotos', !this.checked)" />
+      Incluir fotos
+    </label>
+    <button class="p" type="button" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+
+  <% if (!pratos.length) { %>
+    <div class="vazio">Nenhuma ficha encontrada para impressao.</div>
+  <% } else { %>
+    <% grupos.forEach(function (grupo) { %>
+      <section class="sheet">
+        <% grupo.forEach(function (p) {
+             var c = p.calc;
+             var insumos = p.itens.filter(function (i) { return i.tipo === 'INSUMO'; });
+             var embalagens = p.itens.filter(function (i) { return i.tipo === 'EMBALAGEM'; });
+        %>
+          <div class="ficha">
+            <div class="ficha-top">
+              <div class="foto-wrap">
+                <div class="foto">
+                  <% if (p.prato.imagem_url) { %>
+                    <img src="<%= p.prato.imagem_url %>" alt="" />
+                  <% } else { %>
+                    <span class="sem">sem foto</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="ficha-title">
+                <span class="cod"><%= p.prato.codigo %></span>
+                <h2><%= p.prato.nome %></h2>
+                <div class="sub">Rendimento: <%= p.prato.rendimento %> un &middot; Peso: <%= pesoLbl(c.pesoTotal) %></div>
+              </div>
+            </div>
+
+            <div class="comp-wrap">
+              <% if (insumos.length) { %>
+                <div class="sec-ttl">Insumos</div>
+                <table class="comp">
+                  <thead><tr><th>Item</th><th class="q">Qtd</th><th class="c">Custo</th></tr></thead>
+                  <tbody>
+                    <% insumos.forEach(function (i) { %>
+                      <tr>
+                        <td class="nome"><%= i.nome %> <span class="cod"><%= i.codigo %></span></td>
+                        <td class="q"><%= num(i.quantidade, 3) %> <%= i.unidade %></td>
+                        <td class="c"><%= moeda(i.custo_total) %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              <% } %>
+              <% if (embalagens.length) { %>
+                <div class="sec-ttl emb" style="margin-top:2mm">Embalagens</div>
+                <table class="comp">
+                  <tbody>
+                    <% embalagens.forEach(function (i) { %>
+                      <tr>
+                        <td class="nome"><%= i.nome %> <span class="cod"><%= i.codigo %></span></td>
+                        <td class="q"><%= num(i.quantidade, 3) %> <%= i.unidade %></td>
+                        <td class="c"><%= moeda(i.custo_total) %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              <% } %>
+              <% if (!insumos.length && !embalagens.length) { %>
+                <div style="color:#98a695">Sem itens cadastrados.</div>
+              <% } %>
+            </div>
+
+            <div class="rodape">
+              <div class="item"><div class="lbl">Custo insumos</div><div class="val rd"><%= moeda(c.custoInsumos) %></div></div>
+              <div class="item"><div class="lbl">Embalagem</div><div class="val"><%= moeda(c.custoEmbalagem) %></div></div>
+              <div class="item"><div class="lbl">Custo total</div><div class="val rd"><%= moeda(c.custoTotal) %></div></div>
+              <div class="item"><div class="lbl"><%= markupLbl %></div><div class="val gn"><%= moeda(c.precoSugerido) %></div></div>
+              <div class="item"><div class="lbl">Preco de venda</div><div class="val"><%= c.precoVenda ? moeda(c.precoVenda) : '-' %></div></div>
+              <div class="item">
+                <div class="lbl"><%= cmvLbl %></div>
+                <div class="val <%= c.cmv === null ? '' : (c.cmv <= 35 ? 'gn' : (c.cmv <= 50 ? '' : 'rd')) %>">
+                  <%= c.cmv === null ? 'informe preco' : num(c.cmv) + ' %' %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </section>
+    <% }) %>
+  <% } %>
+</body>
+</html>

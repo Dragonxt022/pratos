@@ -11,7 +11,10 @@
   </a>
   <h3 style="flex:1;text-align:center"><%= pratoSelecionado.nome %></h3>
   <form method="post" action="/editor/<%= encodeURIComponent(pratoSelecionado.codigo) %>/excluir"
-    onsubmit="return appModal.guard(event, this, { title:'Excluir prato', text:'Excluir &#39;<%= pratoSelecionado.nome %>&#39;? Esta acao nao pode ser desfeita.', confirmLabel:'Excluir' })">
+    data-confirm
+    data-confirm-title="Excluir prato"
+    data-confirm-text="Excluir &quot;<%= pratoSelecionado.nome %>&quot;? Esta acao nao pode ser desfeita."
+    data-confirm-label="Excluir">
     <button class="btn btn-danger" type="submit">
       <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
       Excluir
@@ -83,7 +86,10 @@
       </div>
       <span class="row-badge">R$ <%= i.custo_total.toFixed(2).replace('.', ',') %></span>
       <form method="post" action="/editor/<%= encodeURIComponent(pratoSelecionado.codigo) %>/itens/<%= i.id %>/excluir"
-        onsubmit="return appModal.guard(event, this, { title:'Remover insumo', text:'Remover &#39;<%= i.nome %>&#39; deste prato?', confirmLabel:'Remover' })">
+        data-confirm
+        data-confirm-title="Remover insumo"
+        data-confirm-text="Remover &quot;<%= i.nome %>&quot; deste prato?"
+        data-confirm-label="Remover">
         <button class="row-action" type="submit" title="Remover">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -109,7 +115,10 @@
       </div>
       <span class="row-badge">R$ <%= i.custo_total.toFixed(2).replace('.', ',') %></span>
       <form method="post" action="/editor/<%= encodeURIComponent(pratoSelecionado.codigo) %>/itens/<%= i.id %>/excluir"
-        onsubmit="return appModal.guard(event, this, { title:'Remover embalagem', text:'Remover &#39;<%= i.nome %>&#39; deste prato?', confirmLabel:'Remover' })">
+        data-confirm
+        data-confirm-title="Remover embalagem"
+        data-confirm-text="Remover &quot;<%= i.nome %>&quot; deste prato?"
+        data-confirm-label="Remover">
         <button class="row-action" type="submit" title="Remover">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>

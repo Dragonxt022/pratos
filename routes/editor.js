@@ -5,6 +5,7 @@ const { pratoController } = require('../controllers');
 // nada de PUT/DELETE aqui.
 router.get('/', pratoController.editorLista);
 router.post('/', pratoController.create);
+router.post('/excluir-massa', pratoController.destroyMassa);
 router.get('/:codigo', pratoController.editor);
 router.post('/:codigo', pratoController.update);
 router.post('/:codigo/excluir', pratoController.destroy);
